@@ -44,6 +44,18 @@ class JSONConfig(object):
         with open(self.filename, 'w') as fd:
             json.dump(self.config, fd, indent='  ', sort_keys=True)
 
+    # Some convenience functions for the lazy
+    def get(self, key):
+        return reduce(lambda c, k: c[k], key.split('.'), self.config)
+
+    def isset(self, key):
+        try:
+            reduce(lambda c, k: c[k], key.split('.'), self.config)
+        except KeyError:
+            return False
+
+        return True
+
 class User:
     def __init__(self, mask, modes='', is_self=False):
         self.nick, _, mask = mask.partition('!')
