@@ -1,4 +1,4 @@
-from asyncio import iscoroutinefunction
+from asyncio import iscoroutine, iscoroutinefunction
 from collections import defaultdict
 from enum import Enum, auto, unique
 from functools import wraps
@@ -396,6 +396,17 @@ class Event(Enum):
     STOP = auto()
     STOP_ALL = auto()
 
+async def _resolvefunc(func, *args, **kwargs):
+    if iscoroutinefunction(func):
+        result = await func(*args, **kwargs)
+    else:
+        result = func(*args, **kwargs)
+
+    if iscoroutine(result):
+        result = await result
+
+    return result
+
 def event(*triggers):
     for trigger in triggers:
         if type(trigger) not in [Event, str]:
@@ -404,10 +415,7 @@ def event(*triggers):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            if iscoroutinefunction(func):
-                return await func(*args, **kwargs)
-            else:
-                return func(*args, **kwargs)
+            return await _resolvefunc(func, *args, **kwargs)
 
         wrapper.events = triggers
 
@@ -429,10 +437,7 @@ def command(*triggers, **cmdkwargs):
             if 'needs_arg' in cmdkwargs.keys() and cmdkwargs['needs_arg'] and not len(args[-1]):
                 raise CommandNeedsArgsError
 
-            if iscoroutinefunction(func):
-                return await func(*args, **kwargs)
-            else:
-                return func(*args, **kwargs)
+            return await _resolvefunc(func, *args, **kwargs)
 
         wrapper.commands = triggers
         
@@ -447,10 +452,7 @@ def regex(pattern):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            if iscoroutinefunction(func):
-                return await func(*args, **kwargs)
-            else:
-                return func(*args, **kwargs)
+            return await _resolvefunc(func, *args, **kwargs)
 
         wrapper.regex = pattern
         
