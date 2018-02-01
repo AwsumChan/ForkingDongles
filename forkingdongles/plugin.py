@@ -1,6 +1,6 @@
 from asyncio import iscoroutine, iscoroutinefunction
 from collections import defaultdict
-from enum import Enum, auto, unique
+from enum import Enum, unique
 from functools import wraps
 import importlib
 import inspect
@@ -381,28 +381,32 @@ class Plugin:
 
 @unique
 class Event(Enum):
-    RAW = auto()
-    INVITE = auto()
-    PRIVMSG = auto()
-    NOTICE = auto()
-    NICK = auto()
-    MODE = auto()
-    TOPIC = auto()
-    JOIN = auto()
-    PART = auto()
-    KICK = auto()
-    QUIT = auto()
+    RAW = 0
+    INVITE = 1
+    PRIVMSG = 2
+    NOTICE = 3
+    NICK = 4
+    MODE = 5
+    TOPIC = 6
+    JOIN = 7
+    PART = 8
+    KICK = 9
+    QUIT = 10
     
-    STOP = auto()
-    STOP_ALL = auto()
+    STOP = 11
+    STOP_ALL = 12
 
 async def _resolvefunc(func, *args, **kwargs):
     if iscoroutinefunction(func):
+        # async def function
         result = await func(*args, **kwargs)
     else:
+        # normal function or deferred
         result = func(*args, **kwargs)
 
     if iscoroutine(result):
+        # normal function might have called an async function
+        # and didn't need the output, usually an alias
         result = await result
 
     return result

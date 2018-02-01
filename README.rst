@@ -7,7 +7,7 @@ IRC bot framework.
 
 Installation
 ============
-To install ForkingDongles, you'll need a recent version of Python 3 (3.6 or newer) and pip for package dependencies.
+To install ForkingDongles, you'll need a recent version of Python 3 (3.5 or newer) and pip for package dependencies.
 Use of virtualenv is highly recommended. When you obtain the source, run this in the main directory::
 
   $ pip install -r requirements.txt
