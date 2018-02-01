@@ -1,3 +1,4 @@
+from asyncio import iscoroutinefunction
 from collections import defaultdict
 from enum import Enum, auto, unique
 from functools import wraps
@@ -258,11 +259,11 @@ class PluginManager:
 
         for command in self.itercommands(channel):
             if hasattr(command, 'commands') and cmd in command.commands:
-                try:    
+                try:
                     if inspect.ismethod(command):
-                        result = yield defer.maybeDeferred(command, cmd, user, channel, params)
+                        result = yield defer.ensureDeferred(command(cmd, user, channel, params))
                     else:
-                        result = yield defer.maybeDeferred(command, self.bot, cmd, user, channel, params)
+                        result = yield defer.ensureDeferred(command(self.bot, cmd, user, channel, params))
 
                     if result is Event.STOP_ALL:
                         break
@@ -274,9 +275,9 @@ class PluginManager:
             elif hasattr(command, 'regex') and re.search(command.regex, message):
                 try:
                     if inspect.ismethod(command):
-                        result = yield defer.maybeDeferred(command, user, channel, message)
+                        result = yield defer.ensureDeferred(command(user, channel, message))
                     else:
-                        result = yield defer.maybeDeferred(command, self.bot, user, channel, message)
+                        result = yield defer.ensureDeferred(command, user, channel)
 
                     if result is Event.STOP_ALL:
                         break
@@ -347,9 +348,9 @@ class EventManager:
         for callback_id, callback in callbacks.items():
             try:
                 if inspect.ismethod(callback):
-                    result = yield defer.maybeDeferred(callback, name, *params)
+                    result = yield defer.ensureDeferred(callback(name, *params))
                 else:
-                    result = yield defer.maybeDeferred(callback, self.bot, name, *params)
+                    result = yield defer.ensureDeferred(callback(self.bot, name, *params))
 
                 if result in [Event.STOP, Event.STOP_ALL]:
                     break
@@ -402,8 +403,11 @@ def event(*triggers):
 
     def decorator(func):
         @wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
+        async def wrapper(*args, **kwargs):
+            if iscoroutinefunction(func):
+                return await func(*args, **kwargs)
+            else:
+                return func(*args, **kwargs)
 
         wrapper.events = triggers
 
@@ -421,11 +425,14 @@ def command(*triggers, **cmdkwargs):
 
     def decorator(func):
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs):
             if 'needs_arg' in cmdkwargs.keys() and cmdkwargs['needs_arg'] and not len(args[-1]):
                 raise CommandNeedsArgsError
 
-            return func(*args, **kwargs)
+            if iscoroutinefunction(func):
+                return await func(*args, **kwargs)
+            else:
+                return func(*args, **kwargs)
 
         wrapper.commands = triggers
         
@@ -439,8 +446,11 @@ def regex(pattern):
 
     def decorator(func):
         @wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
+        async def wrapper(*args, **kwargs):
+            if iscoroutinefunction(func):
+                return await func(*args, **kwargs)
+            else:
+                return func(*args, **kwargs)
 
         wrapper.regex = pattern
         

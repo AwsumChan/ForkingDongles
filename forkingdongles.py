@@ -1,9 +1,16 @@
+#!/usr/bin/env python3
+
 import argparse
 import sys
 
 from twisted.application.internet import ClientService
 from twisted.application.service import Application
 from twisted.enterprise.adbapi import ConnectionPool
+
+# asyncio shim
+from twisted.internet import asyncioreactor
+asyncioreactor.install()
+
 from twisted.internet import endpoints, protocol, reactor
 from twisted.python import log
 
