@@ -9,6 +9,7 @@ import random
 import re
 import string
 import sys
+import traceback
 
 from twisted.internet import defer
 from twisted.logger import Logger
@@ -269,6 +270,8 @@ class PluginManager:
                         break
                 except CommandNeedsArgsError:
                     continue
+                except AssertionError:
+                    _deferassertion()
                 except:
                     self.log.failure('Failure to execute command')
 
@@ -277,10 +280,12 @@ class PluginManager:
                     if inspect.ismethod(command):
                         result = yield defer.ensureDeferred(command(user, channel, message))
                     else:
-                        result = yield defer.ensureDeferred(command, user, channel)
+                        result = yield defer.ensureDeferred(command(self.bot, user, channel, message))
 
                     if result is Event.STOP_ALL:
                         break
+                except AssertionError:
+                    _deferassertion()
                 except:
                     self.log.failure('Failure to execute regex')
 
@@ -356,6 +361,8 @@ class EventManager:
                     break
             except EventRejectedMessage:
                 continue
+            except AssertionError:
+                _deferassertion()
             except:
                 self.log.failure('Failure to execute callback')
 
@@ -395,6 +402,17 @@ class Event(Enum):
     
     STOP = 11
     STOP_ALL = 12
+
+def _deferassertion():
+    # Twisted doesn't like it when Deferred instances are created in different threads.
+    # However, there's not much we can do if we want to allow support for asyncio.
+    # Sometimes you gotta play with fire and risk the burn.
+    _, _, err = sys.exc_info()
+    
+    if traceback.extract_tb(err)[-1][0].endswith('defer.py'):
+        return
+    else:
+        raise err
 
 async def _resolvefunc(func, *args, **kwargs):
     if iscoroutinefunction(func):

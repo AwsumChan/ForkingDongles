@@ -178,6 +178,11 @@ class ForkingDongles(irc.IRCClient):
         if modes[0] not in '-+':
             modes = '+' + modes
 
+        if len(modes) < 2:
+            # Avoid trying to set channels without any modes set,
+            # easy way to get an unnecessary exception.
+            return
+
         paramModes = self.getChannelModeParams()
 
         try:
