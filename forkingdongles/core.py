@@ -134,11 +134,6 @@ class ForkingDongles(irc.IRCClient):
             self.removeUser(user)
 
     def modeChanged(self, user, channel, added, modes, args):
-        if user is not None:
-            nick, _, userhost = user.partition('!')
-        else:
-            nick = userhost = None
-
         # User mode
         if not channel.startswith('#'):
             if channel.lower() in self.users.keys():
@@ -186,7 +181,7 @@ class ForkingDongles(irc.IRCClient):
         paramModes = self.getChannelModeParams()
 
         try:
-            added, removed = irc.parseModes(modes, args, paramModes)
+            added, _ = irc.parseModes(modes, args, paramModes)
         except irc.IRCBadModes:
             log.err(None, 'An error occurred while parsing the following MODE message: MODE {}'.format(' '.join(params)))
         else:
@@ -201,7 +196,7 @@ class ForkingDongles(irc.IRCClient):
             user = self.users[user.nick.lower()]
 
         if channel.name.lower() in self.channels.keys():
-            channel = self.channels[channel.lower()]
+            channel = self.channels[channel.name.lower()]
 
         self.event_manager.fire(Event.INVITE, user, channel)
 
