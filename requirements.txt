@@ -3,4 +3,4 @@ lxml==4.1.1
 Pillow==8.2.0
 pyOpenSSL==17.5.0
 service-identity==17.0.0
-Twisted==19.7.0
+Twisted==20.3.0
