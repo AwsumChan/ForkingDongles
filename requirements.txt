@@ -1,5 +1,5 @@
 IPy==0.83
-lxml==4.6.5
+lxml==4.9.1
 Pillow==9.0.0
 pyOpenSSL==17.5.0
 service-identity==17.0.0
